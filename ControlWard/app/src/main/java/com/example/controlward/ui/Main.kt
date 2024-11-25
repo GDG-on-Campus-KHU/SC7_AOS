@@ -2,18 +2,23 @@ package com.example.controlward.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.example.controlward.Value
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
@@ -30,7 +35,9 @@ fun MainLayout() {
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 40.dp)
     ) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
@@ -45,7 +52,18 @@ fun MainLayout() {
 //                }
 //            }
         ) {
-
+            Value.disasterList.forEach { disaster ->
+                val position = LatLng(
+                    disaster.locationX.toDouble(),
+                    disaster.locationY.toDouble()
+                )
+                Marker(
+                    state = MarkerState(position = position),
+                    title = disaster.image,
+                    snippet = disaster.disasterText,
+                    onInfoWindowClick = { }
+                )
+            }
         }
     }
 }
