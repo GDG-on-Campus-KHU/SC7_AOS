@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun UserInfoLayout() {
+fun UserInfoScreen() {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -18,5 +18,5 @@ fun UserInfoLayout() {
 @Preview(showBackground = true)
 @Composable
 fun PreviewUserInfo() {
-    UserInfoLayout()
+    UserInfoScreen()
 }
