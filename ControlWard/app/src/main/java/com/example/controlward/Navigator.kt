@@ -4,18 +4,18 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.controlward.ui.AddDisasterLayout
-import com.example.controlward.ui.TabLayout
+import com.example.controlward.ui.AddDisasterScreen
+import com.example.controlward.ui.TabScreen
 
 @Composable
-fun LayoutNavigator() {
+fun ScreenNavigator() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "TabLayout") {
-        composable("TabLayout") {
-            TabLayout(navController)
+    NavHost(navController = navController, startDestination = "TabScreen") {
+        composable("TabScreen") {
+            TabScreen(navController)
         }
-        composable("AddDisaster") {
-            AddDisasterLayout()
+        composable("AddDisasterScreen") {
+            AddDisasterScreen()
         }
     }
 }
