@@ -65,27 +65,28 @@ fun MainScreen() {
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
     }
-    val disasterCategory = listOf("지진", "화재", "쓰나미", "강력 범죄")
-    val selectedIndex = remember { mutableIntStateOf(4) }
+    val disasterCategory = listOf("범죄", "지진", "홍수", "폭설", "쓰나미")
+    val selectedIndex = remember { mutableIntStateOf(5) }
     val disasterList = remember {
         derivedStateOf {
             when (selectedIndex.value) {
-                0 -> Value.disasterList1
-                1 -> Value.disasterList2
-                2 -> Value.disasterList2
-                3 -> Value.disasterList2
-                else -> Value.disasterAllList
+                0 -> Value.disasterListCrime
+                1 -> Value.disasterListEarthQuake
+                2 -> Value.disasterListFlood
+                3 -> Value.disasterListHeavySnow
+                4 -> Value.disasterListTsunami
+                else -> emptyList()
             }
         }
     }
-    var locationLatLng = LatLng(37.5665, 126.9780)
+    var userLocation = Value.location
 
     LaunchedEffect(Unit) {
         val location = getCurrentLocation(context, fusedLocationClient)
         location?.let {
-            locationLatLng = LatLng(it.latitude, it.longitude)
+            userLocation = LatLng(it.latitude, it.longitude)
             cameraPositionState.position =
-                CameraPosition.fromLatLngZoom(locationLatLng, 15f)
+                CameraPosition.fromLatLngZoom(userLocation, 15f)
         }
     }
 
@@ -105,23 +106,16 @@ fun MainScreen() {
             cameraPositionState = cameraPositionState,
             properties = properties,
             uiSettings = uiSettings,
-//            onMapClick = { latLng ->
-//                coroutineScope.launch {
-//                    currentAddress = getAddressFromLatLng(context, latLng).toString()
-//                    Toast.makeText(context, currentAddress, Toast.LENGTH_SHORT).show()
-//                    buttonEnabled = true
-//                }
-//            }
         ) {
             disasterList.value.forEach { disaster ->
                 val position = LatLng(
-                    disaster.locationX.toDouble(),
-                    disaster.locationY.toDouble()
+                    disaster.location.first().toDouble(),
+                    disaster.location.last().toDouble()
                 )
                 Marker(
                     state = MarkerState(position = position),
                     title = disaster.image,
-                    snippet = disaster.disasterText,
+                    snippet = disaster.text,
                     onInfoWindowClick = { }
                 )
             }
@@ -130,7 +124,7 @@ fun MainScreen() {
         IconButton(
             onClick = {
                 cameraPositionState.position =
-                    CameraPosition.fromLatLngZoom(locationLatLng, 15f)
+                    CameraPosition.fromLatLngZoom(userLocation, 15f)
             },
             modifier = Modifier
                 .align(Alignment.BottomStart)

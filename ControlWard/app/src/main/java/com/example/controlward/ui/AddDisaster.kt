@@ -41,7 +41,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil.compose.rememberAsyncImagePainter
+import com.example.controlward.PostRequest
 import com.example.controlward.R
+import com.example.controlward.Value
+import com.example.controlward.postToDB
 import java.io.ByteArrayOutputStream
 
 @Composable
@@ -149,8 +152,15 @@ fun AddDisasterScreen() {
 
         Button(
             onClick = {
-                //add disaster api(image, text, Pair<x, y>)
-                //disaster list update
+                val postRequest = PostRequest(
+                    Value.uid,
+                    disasterText,
+                    selectedImageUri.toString(),
+                    listOf(Value.location.latitude, Value.location.longitude),
+                )
+                postToDB(postRequest)
+                disasterText = ""
+                selectedImageUri = null
             },
             modifier = Modifier.padding(bottom = 40.dp),
         ) {

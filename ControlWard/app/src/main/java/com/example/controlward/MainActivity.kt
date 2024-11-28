@@ -3,34 +3,30 @@ package com.example.controlward
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import com.example.controlward.ui.LoadingScreen
 import com.example.controlward.ui.theme.ControlWardTheme
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.tasks.await
 
 object Value {
     lateinit var uid: String
-    val disasterList1: List<DisasterModel> =
-        listOf(
-            DisasterModel("ex1", "ex1", "37.5665", "126.9780"),
-            DisasterModel("ex2", "ex2", "37.5265", "126.9380"),
-            DisasterModel("ex3", "ex3", "37.5765", "126.9880"),
-        )
-    val disasterList2: List<DisasterModel> =
-        listOf(
-            DisasterModel("ex4", "ex4", "37.5565", "126.9680"),
-            DisasterModel("ex5", "ex5", "37.5865", "126.9980"),
-            DisasterModel("ex6", "ex6", "37.5465", "126.9580"),
-            DisasterModel("ex7", "ex7", "37.5365", "126.9480")
-        )
-
-    val disasterAllList = disasterList1 + disasterList2
+    var location = LatLng(37.5665, 126.9780)
+    var disasterAllList = mutableListOf<DisasterModel>()
+    var disasterListCrime = mutableListOf<DisasterModel>()
+    var disasterListEarthQuake = mutableListOf<DisasterModel>()
+    var disasterListFlood = mutableListOf<DisasterModel>()
+    var disasterListHeavySnow = mutableListOf<DisasterModel>()
+    var disasterListTsunami = mutableListOf<DisasterModel>()
 }
 
 class MainActivity : ComponentActivity() {
@@ -39,15 +35,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        //위치 확인 -> disaster list 가져오기
-        //val disasterList = DisasterViewModel().getDisasterList()
-
-//        setContent {
-//            ControlWardTheme {
-//                LoadingScreen()
-//            }
-//        }
 
         requestPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
@@ -60,10 +47,20 @@ class MainActivity : ComponentActivity() {
 
                 setContent {
                     ControlWardTheme {
-                        ScreenNavigator()
+                        LoadingScreen()
                     }
                 }
-            }else{
+
+                getFromDB { disasters ->
+                    Value.disasterAllList = disasters.toMutableList()
+
+                    setContent {
+                        ControlWardTheme {
+                            ScreenNavigator()
+                        }
+                    }
+                }
+            } else {
                 Toast.makeText(this, "앱을 사용하기 위해서 위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
                 finish()
             }
