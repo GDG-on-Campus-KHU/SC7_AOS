@@ -40,18 +40,22 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.controlward.PostRequest
 import com.example.controlward.R
 import com.example.controlward.Value
+import com.example.controlward.getFromDB
 import com.example.controlward.postToDB
 import java.io.ByteArrayOutputStream
 
 @Composable
-fun AddDisasterScreen() {
+fun AddDisasterScreen(navController: NavController) {
+    val context = LocalContext.current
     var disasterText by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    val context = LocalContext.current
+    var isLoading by remember { mutableStateOf(true) }
     val cameraPermission = android.Manifest.permission.CAMERA
 
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -85,89 +89,99 @@ fun AddDisasterScreen() {
         onResult = { uri -> if (uri != null) selectedImageUri = uri }
     )
 
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(40.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(4 / 3f)
-                .border(1.dp, Color.Gray, RoundedCornerShape(16.dp))
-                .padding(10.dp)
-                .clickable {
-                    imageOptions(context) {
-                        when (it) {
-                            "카메라" -> permissionLauncher.launch(cameraPermission)
-                            "갤러리" -> galleryLauncher.launch("image/*")
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(4 / 3f)
+                    .border(1.dp, Color.Gray, RoundedCornerShape(16.dp))
+                    .padding(10.dp)
+                    .clickable {
+                        imageOptions(context) {
+                            when (it) {
+                                "카메라" -> permissionLauncher.launch(cameraPermission)
+                                "갤러리" -> galleryLauncher.launch("image/*")
+                            }
                         }
-                    }
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            if (selectedImageUri != null) {
-                Image(
-                    painter = rememberAsyncImagePainter(selectedImageUri),
-                    contentDescription = "Selected Image",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(10.dp),
-                    contentScale = ContentScale.Fit
-                )
-                Log.d("testt", selectedImageUri.toString())
-            } else {
-                Text(
-                    text = "이미지를 클릭하여 추가하세요",
-                    style = TextStyle(color = Color.Gray)
-                )
-            }
-        }
-        Spacer(modifier = Modifier.padding(bottom = 20.dp))
-
-        BasicTextField(
-            value = disasterText,
-            onValueChange = { if (it.length <= 100) disasterText = it },
-            modifier = Modifier
-                .border(1.dp, Color.Gray, RoundedCornerShape(16.dp))
-                .padding(10.dp)
-                .fillMaxSize()
-                .weight(1f),
-            decorationBox = {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (disasterText.isEmpty())
-                        Text(
-                            text = "무슨 상황인가요?",
-                            style = TextStyle(Color.Gray)
-                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                if (selectedImageUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(selectedImageUri),
+                        contentDescription = "Selected Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                    Log.d("testt", selectedImageUri.toString())
+                } else {
+                    Text(
+                        text = "이미지를 클릭하여 추가하세요",
+                        style = TextStyle(color = Color.Gray)
+                    )
                 }
-                it()
             }
-        )
-        Spacer(modifier = Modifier.padding(bottom = 20.dp))
+            Spacer(modifier = Modifier.padding(bottom = 20.dp))
 
-        Button(
-            onClick = {
+            BasicTextField(
+                value = disasterText,
+                onValueChange = { if (it.length <= 100) disasterText = it },
+                modifier = Modifier
+                    .border(1.dp, Color.Gray, RoundedCornerShape(16.dp))
+                    .padding(10.dp)
+                    .fillMaxSize()
+                    .weight(1f),
+                decorationBox = {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (disasterText.isEmpty())
+                            Text(
+                                text = "무슨 상황인가요?",
+                                style = TextStyle(Color.Gray)
+                            )
+                    }
+                    it()
+                }
+            )
+            Spacer(modifier = Modifier.padding(bottom = 20.dp))
+
+            Button(
+                onClick = {
                 val postRequest = PostRequest(
                     Value.uid,
                     disasterText,
                     selectedImageUri.toString(),
                     listOf(Value.location.latitude, Value.location.longitude),
                 )
-                postToDB(postRequest)
-                disasterText = ""
-                selectedImageUri = null
-            },
-            modifier = Modifier.padding(bottom = 40.dp),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_add_24),
-                contentDescription = ""
-            )
+                    postToDB(postRequest)
+                    disasterText = ""
+                    selectedImageUri = null
+                    isLoading = false
+                    getFromDB { disasters ->
+                        Value.disasterAllList = disasters.toMutableList()
+                        Value.disasterMap.clear()
+                        disasters.forEach { Value.disasterMap[it.category]?.add(it) }
+                        navController.popBackStack()
+                    }
+                },
+                modifier = Modifier.padding(bottom = 20.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_add_24),
+                    contentDescription = ""
+                )
+            }
+        } else {
+            LoadingScreen()
         }
     }
 }
@@ -193,5 +207,5 @@ fun imageOptions(context: Context, option: (String) -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun PreviewAddDisaster() {
-    AddDisasterScreen()
+    AddDisasterScreen(rememberNavController())
 }

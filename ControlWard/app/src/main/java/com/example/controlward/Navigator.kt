@@ -15,7 +15,7 @@ fun ScreenNavigator() {
             TabScreen(navController)
         }
         composable("AddDisasterScreen") {
-            AddDisasterScreen()
+            AddDisasterScreen(navController)
         }
     }
 }

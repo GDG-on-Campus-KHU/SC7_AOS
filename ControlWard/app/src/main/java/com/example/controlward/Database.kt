@@ -15,7 +15,7 @@ interface ApiService {
     fun getPosts(): Call<List<Map<String, Any>>>
 
     @POST("posts/")
-    fun createPost(@Body post: Any): Call<Unit>
+    fun createPost(@Body post: PostRequest): Call<PostRequest>
 }
 
 object RetrofitClient {
@@ -42,7 +42,7 @@ fun getFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
         ) {
             if (response.isSuccessful) {
                 val disasterList = response.body()?.map { item ->
-                    val data = DisasterModel(
+                    DisasterModel(
                         id = item["id"].toString(),
                         userId = item["user_id"].toString(),
                         text = item["text"].toString(),
@@ -51,14 +51,6 @@ fun getFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
                         category = item["category"].toString(),
                         accuracy = item["accuracy"].toString()
                     )
-                    when(data.category){
-                        "Crime" -> Value.disasterListCrime.add(data)
-                        "EarthQuake" -> Value.disasterListEarthQuake.add(data)
-                        "Flood" -> Value.disasterListFlood.add(data)
-                        "HeavySnow" -> Value.disasterListHeavySnow.add(data)
-                        "Tsunami" -> Value.disasterListTsunami.add(data)
-                        else -> {}
-                    }
                 } as MutableList<DisasterModel>
                 onSuccess(disasterList)
             } else {
@@ -72,9 +64,9 @@ fun getFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
     })
 }
 
-fun postToDB(postRequest: Any) {
-    RetrofitClient.apiService.createPost(postRequest).enqueue(object : Callback<Unit> {
-        override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+fun postToDB(postRequest: PostRequest) {
+    RetrofitClient.apiService.createPost(postRequest).enqueue(object : Callback<PostRequest> {
+        override fun onResponse(call: Call<PostRequest>, response: Response<PostRequest>) {
             if (response.isSuccessful) {
                 Log.d("testt", response.code().toString())
             } else {
@@ -82,7 +74,7 @@ fun postToDB(postRequest: Any) {
             }
         }
 
-        override fun onFailure(call: Call<Unit>, t: Throwable) {
+        override fun onFailure(call: Call<PostRequest>, t: Throwable) {
             Log.d("testt", t.message.toString())
         }
     })

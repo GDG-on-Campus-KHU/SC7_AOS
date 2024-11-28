@@ -34,22 +34,18 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.controlward.R
 import com.example.controlward.Value
+import com.example.controlward.Value.disasterCategory
 
 @SuppressLint("AutoboxingStateValueProperty")
 @Composable
 fun DisasterListScreen(navController: NavController) {
-    val disasterCategory = listOf("범죄", "지진", "홍수", "폭설", "쓰나미")
     val selectedIndex = remember { mutableIntStateOf(5) }
     val disasterList = remember {
         derivedStateOf {
-            when (selectedIndex.value) {
-                0 -> Value.disasterListCrime
-                1 -> Value.disasterListEarthQuake
-                2 -> Value.disasterListFlood
-                3 -> Value.disasterListHeavySnow
-                4 -> Value.disasterListTsunami
-                else -> emptyList()
-            }
+            if (selectedIndex.value == 5)
+                Value.disasterAllList
+            else
+                Value.disasterMap[disasterCategory[selectedIndex.value].first] ?: emptyList()
         }
     }
 
@@ -66,7 +62,7 @@ fun DisasterListScreen(navController: NavController) {
                     selected = selectedIndex.value == index,
                     onClick = { selectedIndex.value = index },
                     modifier = Modifier.background(Color(240, 230, 255, 255)),
-                    text = { Text(disaster) }
+                    text = { Text(disaster.second) }
                 )
             }
         }
@@ -74,8 +70,7 @@ fun DisasterListScreen(navController: NavController) {
 
         Box {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             ) {
                 items(disasterList.value) { disaster ->
                     Row(
@@ -107,7 +102,7 @@ fun DisasterListScreen(navController: NavController) {
                 onClick = { navController.navigate("AddDisasterScreen") },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 80.dp)
+                    .padding(bottom = 40.dp)
             ) {
                 Text(text = "추가하기")
             }

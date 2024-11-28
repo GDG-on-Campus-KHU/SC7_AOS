@@ -1,10 +1,6 @@
 package com.example.controlward.ui
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.pm.PackageManager
-import android.location.Location
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,7 +19,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -32,14 +27,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.core.content.ContextCompat
 import com.example.controlward.Value
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
+import com.example.controlward.Value.disasterCategory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -49,44 +41,26 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.tasks.await
 
 @SuppressLint("AutoboxingStateValueProperty")
 @Composable
 fun MainScreen() {
-    val context = LocalContext.current
-    val cameraPositionState = rememberCameraPositionState { }
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(Value.location, 12f)
+    }
     val uiSettings by remember {
         mutableStateOf(MapUiSettings(myLocationButtonEnabled = true))
     }
     val properties by remember {
         mutableStateOf(MapProperties(mapType = MapType.NORMAL))
     }
-    val fusedLocationClient = remember {
-        LocationServices.getFusedLocationProviderClient(context)
-    }
-    val disasterCategory = listOf("범죄", "지진", "홍수", "폭설", "쓰나미")
     val selectedIndex = remember { mutableIntStateOf(5) }
     val disasterList = remember {
         derivedStateOf {
-            when (selectedIndex.value) {
-                0 -> Value.disasterListCrime
-                1 -> Value.disasterListEarthQuake
-                2 -> Value.disasterListFlood
-                3 -> Value.disasterListHeavySnow
-                4 -> Value.disasterListTsunami
-                else -> emptyList()
-            }
-        }
-    }
-    var userLocation = Value.location
-
-    LaunchedEffect(Unit) {
-        val location = getCurrentLocation(context, fusedLocationClient)
-        location?.let {
-            userLocation = LatLng(it.latitude, it.longitude)
-            cameraPositionState.position =
-                CameraPosition.fromLatLngZoom(userLocation, 15f)
+            if (selectedIndex.value == 5)
+                Value.disasterAllList
+            else
+                Value.disasterMap[disasterCategory[selectedIndex.value].first] ?: emptyList()
         }
     }
 
@@ -97,7 +71,7 @@ fun MainScreen() {
     ) {
         TabColumn(
             selectedTabIndex = selectedIndex.value,
-            tabs = disasterCategory,
+            tabs = disasterCategory.map { it.second },
             onTabSelected = { selectedIndex.value = it },
         )
 
@@ -106,6 +80,9 @@ fun MainScreen() {
             cameraPositionState = cameraPositionState,
             properties = properties,
             uiSettings = uiSettings,
+            onMapClick = {
+                selectedIndex.value = 5
+            }
         ) {
             disasterList.value.forEach { disaster ->
                 val position = LatLng(
@@ -124,7 +101,7 @@ fun MainScreen() {
         IconButton(
             onClick = {
                 cameraPositionState.position =
-                    CameraPosition.fromLatLngZoom(userLocation, 15f)
+                    CameraPosition.fromLatLngZoom(Value.location, 12f)
             },
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -178,24 +155,6 @@ fun TabColumn(
                 )
             }
         }
-    }
-}
-
-suspend fun getCurrentLocation(
-    context: Context,
-    fusedLocationClient: FusedLocationProviderClient,
-): Location? {
-    if (ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_FINE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED
-    ) {
-        return null
-    }
-
-    return try {
-        fusedLocationClient.lastLocation.await()
-    } catch (e: Exception) {
-        null
     }
 }
 
