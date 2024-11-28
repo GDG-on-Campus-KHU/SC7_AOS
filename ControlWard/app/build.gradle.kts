@@ -11,6 +11,7 @@ val properties = Properties().apply {
     load(FileInputStream(rootProject.file("local.properties")))
 }
 val GOOGLE_MAP_API = (properties.getProperty("GOOGLE_MAP_API")).replace("\"", "")
+val localhost = (properties.getProperty("localhost"))
 
 android {
     namespace = "com.example.controlward"
@@ -29,6 +30,8 @@ android {
         }
 
         addManifestPlaceholders(mapOf("GOOGLE_MAP_API" to GOOGLE_MAP_API))
+
+        buildConfigField("String", "localhost", localhost)
     }
 
     buildTypes {
@@ -49,6 +52,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -85,4 +89,8 @@ dependencies {
     implementation(libs.com.google.firebase.firebase.analytics)
     implementation(libs.google.firebase.auth.ktx)
     implementation(libs.play.services.location)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
+    implementation(libs.kotlin.stdlib)
 }

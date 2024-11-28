@@ -38,15 +38,16 @@ import com.example.controlward.Value
 @SuppressLint("AutoboxingStateValueProperty")
 @Composable
 fun DisasterListScreen(navController: NavController) {
-    val disasterCategory = listOf("지진", "화재", "쓰나미", "강력 범죄")
-    val selectedIndex = remember { mutableIntStateOf(0) }
+    val disasterCategory = listOf("범죄", "지진", "홍수", "폭설", "쓰나미")
+    val selectedIndex = remember { mutableIntStateOf(5) }
     val disasterList = remember {
         derivedStateOf {
             when (selectedIndex.value) {
-                0 -> Value.disasterList1
-                1 -> Value.disasterList2
-                2 -> Value.disasterList2
-                3 -> Value.disasterList2
+                0 -> Value.disasterListCrime
+                1 -> Value.disasterListEarthQuake
+                2 -> Value.disasterListFlood
+                3 -> Value.disasterListHeavySnow
+                4 -> Value.disasterListTsunami
                 else -> emptyList()
             }
         }
@@ -91,7 +92,7 @@ fun DisasterListScreen(navController: NavController) {
                             contentDescription = ""
                         )
                         Text(
-                            text = disaster.disasterText,
+                            text = disaster.text,
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(10.dp),
