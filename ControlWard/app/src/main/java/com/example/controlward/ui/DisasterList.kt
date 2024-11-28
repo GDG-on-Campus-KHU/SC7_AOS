@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,12 +28,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.controlward.R
+import coil.compose.rememberAsyncImagePainter
 import com.example.controlward.Value
 import com.example.controlward.Value.disasterCategory
 
@@ -78,9 +79,12 @@ fun DisasterListScreen(navController: NavController) {
                             .fillMaxWidth()
                             .border(1.dp, Color.Black, RoundedCornerShape(16.dp))
                             .padding(10.dp)
+                            .clickable {
+                                navController.navigate("DisasterDetailScreen/${disaster.image}/${disaster.text}")
+                            }
                     ) {
                         Image(
-                            painter = painterResource(R.drawable.ic_launcher_background),
+                            painter = rememberAsyncImagePainter(disaster.image.toUri()),
                             modifier = Modifier
                                 .fillMaxWidth(0.3f)
                                 .aspectRatio(1f),

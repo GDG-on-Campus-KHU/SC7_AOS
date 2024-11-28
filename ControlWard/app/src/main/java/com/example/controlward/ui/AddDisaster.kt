@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Base64
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -89,7 +88,6 @@ fun AddDisasterScreen(navController: NavController) {
         onResult = { uri -> if (uri != null) selectedImageUri = uri }
     )
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -120,7 +118,6 @@ fun AddDisasterScreen(navController: NavController) {
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit
                     )
-                    Log.d("testt", selectedImageUri.toString())
                 } else {
                     Text(
                         text = "이미지를 클릭하여 추가하세요",
@@ -156,12 +153,12 @@ fun AddDisasterScreen(navController: NavController) {
 
             Button(
                 onClick = {
-                val postRequest = PostRequest(
-                    Value.uid,
-                    disasterText,
-                    selectedImageUri.toString(),
-                    listOf(Value.location.latitude, Value.location.longitude),
-                )
+                    val postRequest = PostRequest(
+                        Value.uid,
+                        disasterText,
+                        selectedImageUri.toString(),
+                        listOf(Value.location.latitude, Value.location.longitude),
+                    )
                     postToDB(postRequest)
                     disasterText = ""
                     selectedImageUri = null
