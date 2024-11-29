@@ -43,7 +43,6 @@ fun getFileFromUri(context: Context, uri: Uri): File? {
     return file
 }
 
-
 fun uploadImageToImgur(
     imageFile: File?,
     onSuccess: (String) -> Unit,

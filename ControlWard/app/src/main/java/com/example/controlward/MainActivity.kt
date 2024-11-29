@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,18 +27,18 @@ object Value {
     var location = LatLng(37.5665, 126.9780)
     var disasterAllList = mutableListOf<DisasterModel>()
     val disasterMap: MutableMap<String, MutableList<DisasterModel>> = mutableMapOf(
-        "Crime" to mutableListOf(),
-        "EarthQuake" to mutableListOf(),
-        "Flood" to mutableListOf(),
-        "HeavySnow" to mutableListOf(),
-        "Tsunami" to mutableListOf()
+        "인명피해" to mutableListOf(),
+        "가뭄" to mutableListOf(),
+        "지진" to mutableListOf(),
+        "화재" to mutableListOf(),
+        "수해" to mutableListOf()
     )
     val disasterCategory = listOf(
-        "Crime" to ("범죄" to BitmapDescriptorFactory.HUE_RED),
-        "EarthQuake" to ("지진" to BitmapDescriptorFactory.HUE_VIOLET),
-        "Flood" to ("홍수" to BitmapDescriptorFactory.HUE_BLUE),
-        "HeavySnow" to ("폭설" to BitmapDescriptorFactory.HUE_CYAN),
-        "Tsunami" to ("쓰나미" to BitmapDescriptorFactory.HUE_MAGENTA)
+        "인명피해" to BitmapDescriptorFactory.HUE_RED,
+        "가뭄" to BitmapDescriptorFactory.HUE_BLUE,
+        "지진" to BitmapDescriptorFactory.HUE_VIOLET,
+        "화재" to BitmapDescriptorFactory.HUE_CYAN,
+        "수해" to BitmapDescriptorFactory.HUE_MAGENTA,
     )
 }
 

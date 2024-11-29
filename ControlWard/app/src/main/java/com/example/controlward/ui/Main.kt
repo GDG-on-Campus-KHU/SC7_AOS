@@ -72,7 +72,7 @@ fun MainScreen() {
     ) {
         TabColumn(
             selectedTabIndex = selectedIndex.value,
-            tabs = disasterCategory.map { it.second.first },
+            tabs = disasterCategory.map { it.first },
             onTabSelected = { selectedIndex.value = it },
         )
 
@@ -95,7 +95,7 @@ fun MainScreen() {
                     title = disaster.image,
                     snippet = disaster.text,
                     icon = BitmapDescriptorFactory.defaultMarker(
-                        disasterCategory.find { it.first == disaster.category }?.second?.second
+                        disasterCategory.find { it.first == disaster.category }?.second
                             ?: BitmapDescriptorFactory.HUE_RED
                     ),
                     onInfoWindowClick = { },

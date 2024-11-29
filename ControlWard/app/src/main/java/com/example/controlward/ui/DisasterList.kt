@@ -65,7 +65,7 @@ fun DisasterListScreen(navController: NavController) {
                     selected = selectedIndex.value == index,
                     onClick = { selectedIndex.value = index },
                     modifier = Modifier.background(Color(240, 230, 255, 255)),
-                    text = { Text(disaster.second.first) }
+                    text = { Text(disaster.first) }
                 )
             }
         }
