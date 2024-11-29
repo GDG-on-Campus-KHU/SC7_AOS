@@ -1,6 +1,12 @@
 package com.example.controlward.ui
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,11 +33,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.core.content.ContextCompat
+import com.example.controlward.R
 import com.example.controlward.Value
 import com.example.controlward.Value.disasterCategory
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -46,6 +56,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 @SuppressLint("AutoboxingStateValueProperty")
 @Composable
 fun MainScreen() {
+    val context = LocalContext.current
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(Value.location, 12f)
     }
@@ -90,14 +101,14 @@ fun MainScreen() {
                     disaster.location.first().toDouble(),
                     disaster.location.last().toDouble()
                 )
+                val hue = disasterCategory.find { it.first == disaster.category }?.second
+                    ?: BitmapDescriptorFactory.HUE_RED
+                val alpha = disaster.accuracy.toFloat()
                 Marker(
                     state = MarkerState(position = position),
                     title = disaster.image,
                     snippet = disaster.text,
-                    icon = BitmapDescriptorFactory.defaultMarker(
-                        disasterCategory.find { it.first == disaster.category }?.second
-                            ?: BitmapDescriptorFactory.HUE_RED
-                    ),
+                    icon = customMarker(context, hue, alpha),
                     onInfoWindowClick = { },
                 )
             }
@@ -162,6 +173,41 @@ fun TabColumn(
         }
     }
 }
+
+fun customMarker(context: Context, hue: Float, alpha: Float): BitmapDescriptor {
+    val vectorDrawable = ContextCompat.getDrawable(context, R.drawable.baseline_location_on_24)
+        ?: return BitmapDescriptorFactory.defaultMarker(hue)
+
+    val originalBitmap = Bitmap.createBitmap(
+        vectorDrawable.intrinsicWidth,
+        vectorDrawable.intrinsicHeight,
+        Bitmap.Config.ARGB_8888
+    )
+
+    val canvas = Canvas(originalBitmap)
+    vectorDrawable.setBounds(0, 0, canvas.width, canvas.height)
+    vectorDrawable.draw(canvas)
+
+    val resizedBitmap = Bitmap.createScaledBitmap(
+        originalBitmap,
+        (originalBitmap.width * (1 + 0.5 * alpha)).toInt(),
+        (originalBitmap.height * (1 + 0.5 * alpha)).toInt(),
+        false
+    )
+
+    val paint = Paint().apply {
+        colorFilter = PorterDuffColorFilter(
+            android.graphics.Color.HSVToColor((alpha * 255).toInt(), floatArrayOf(hue, 1f, 1f)),
+            PorterDuff.Mode.SRC_IN
+        )
+    }
+
+    val resizedCanvas = Canvas(resizedBitmap)
+    resizedCanvas.drawBitmap(resizedBitmap, 0f, 0f, paint)
+
+    return BitmapDescriptorFactory.fromBitmap(resizedBitmap)
+}
+
 
 @Preview(showBackground = true)
 @Composable
