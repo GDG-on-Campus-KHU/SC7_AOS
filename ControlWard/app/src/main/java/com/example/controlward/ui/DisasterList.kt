@@ -1,6 +1,7 @@
 package com.example.controlward.ui
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,12 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.controlward.Value
 import com.example.controlward.Value.disasterCategory
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @SuppressLint("AutoboxingStateValueProperty")
 @Composable
@@ -63,7 +65,7 @@ fun DisasterListScreen(navController: NavController) {
                     selected = selectedIndex.value == index,
                     onClick = { selectedIndex.value = index },
                     modifier = Modifier.background(Color(240, 230, 255, 255)),
-                    text = { Text(disaster.second) }
+                    text = { Text(disaster.second.first) }
                 )
             }
         }
@@ -80,11 +82,13 @@ fun DisasterListScreen(navController: NavController) {
                             .border(1.dp, Color.Black, RoundedCornerShape(16.dp))
                             .padding(10.dp)
                             .clickable {
-                                navController.navigate("DisasterDetailScreen/${disaster.image}/${disaster.text}")
+                                val encodedImage = URLEncoder.encode(disaster.image, StandardCharsets.UTF_8.toString())
+                                Log.d("testt", encodedImage)
+                                navController.navigate("DisasterDetailScreen/${encodedImage}/${disaster.text}")
                             }
                     ) {
                         Image(
-                            painter = rememberAsyncImagePainter(disaster.image.toUri()),
+                            painter = rememberAsyncImagePainter(disaster.image),
                             modifier = Modifier
                                 .fillMaxWidth(0.3f)
                                 .aspectRatio(1f),

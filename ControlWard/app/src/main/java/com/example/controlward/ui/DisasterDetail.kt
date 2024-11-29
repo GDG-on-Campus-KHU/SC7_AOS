@@ -30,7 +30,7 @@ fun DisasterDetailScreen(image: String, text: String) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = rememberAsyncImagePainter(image.toUri()),
+            painter = rememberAsyncImagePainter(image),
             contentDescription = "Selected Image",
             modifier = Modifier
                 .fillMaxWidth()

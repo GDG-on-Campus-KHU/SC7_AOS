@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,6 +17,7 @@ import com.example.controlward.ui.LoadingScreen
 import com.example.controlward.ui.theme.ControlWardTheme
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -24,8 +26,6 @@ import kotlinx.coroutines.tasks.await
 object Value {
     lateinit var uid: String
     var location = LatLng(37.5665, 126.9780)
-
-    //    lateinit var disasterAllList: MutableList<DisasterModel>
     var disasterAllList = mutableListOf<DisasterModel>()
     val disasterMap: MutableMap<String, MutableList<DisasterModel>> = mutableMapOf(
         "Crime" to mutableListOf(),
@@ -35,11 +35,11 @@ object Value {
         "Tsunami" to mutableListOf()
     )
     val disasterCategory = listOf(
-        "Crime" to "범죄",
-        "EarthQuake" to "지진",
-        "Flood" to "홍수",
-        "HeavySnow" to "폭설",
-        "Tsunami" to "쓰나미"
+        "Crime" to ("범죄" to BitmapDescriptorFactory.HUE_RED),
+        "EarthQuake" to ("지진" to BitmapDescriptorFactory.HUE_VIOLET),
+        "Flood" to ("홍수" to BitmapDescriptorFactory.HUE_BLUE),
+        "HeavySnow" to ("폭설" to BitmapDescriptorFactory.HUE_CYAN),
+        "Tsunami" to ("쓰나미" to BitmapDescriptorFactory.HUE_MAGENTA)
     )
 }
 
@@ -56,32 +56,7 @@ class MainActivity : ComponentActivity() {
             if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
                 permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
             ) {
-                setContent {
-                    ControlWardTheme {
-                        LoadingScreen()
-                    }
-                }
-
-                auth = FirebaseAuth.getInstance()
-                signInAnonymously()
-
-                lifecycleScope.launch {
-                    val fusedLocationClient =
-                        LocationServices.getFusedLocationProviderClient(this@MainActivity)
-                    val location = getCurrentLocation(this@MainActivity, fusedLocationClient)
-                    location?.let { Value.location = LatLng(it.latitude, it.longitude) }
-
-                    getFromDB { disasters ->
-                        Value.disasterAllList = disasters.toMutableList()
-                        disasters.forEach { Value.disasterMap[it.category]?.add(it) }
-
-                        setContent {
-                            ControlWardTheme {
-                                ScreenNavigator()
-                            }
-                        }
-                    }
-                }
+                initializeApp()
             } else {
                 Toast.makeText(this, "앱을 사용하기 위해서 위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
                 finish()
@@ -100,11 +75,7 @@ class MainActivity : ComponentActivity() {
         ) == PackageManager.PERMISSION_GRANTED
 
         if (hasFineLocationPermission && hasCoarseLocationPermission) {
-            setContent {
-                ControlWardTheme {
-                    ScreenNavigator()
-                }
-            }
+            initializeApp()
         } else {
             requestPermissionLauncher.launch(
                 arrayOf(
@@ -143,6 +114,35 @@ class MainActivity : ComponentActivity() {
             fusedLocationClient.lastLocation.await()
         } catch (e: Exception) {
             null
+        }
+    }
+
+    private fun initializeApp() {
+        setContent {
+            ControlWardTheme {
+                LoadingScreen()
+            }
+        }
+
+        auth = FirebaseAuth.getInstance()
+        signInAnonymously()
+
+        lifecycleScope.launch {
+            val fusedLocationClient =
+                LocationServices.getFusedLocationProviderClient(this@MainActivity)
+            val location = getCurrentLocation(this@MainActivity, fusedLocationClient)
+            location?.let { Value.location = LatLng(it.latitude, it.longitude) }
+
+            getDataFromDB { disasters ->
+                Value.disasterAllList = disasters.toMutableList()
+                disasters.forEach { Value.disasterMap[it.category]?.add(it) }
+
+                setContent {
+                    ControlWardTheme {
+                        ScreenNavigator()
+                    }
+                }
+            }
         }
     }
 }

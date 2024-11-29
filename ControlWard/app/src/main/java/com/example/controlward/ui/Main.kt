@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.controlward.Value
 import com.example.controlward.Value.disasterCategory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -71,7 +72,7 @@ fun MainScreen() {
     ) {
         TabColumn(
             selectedTabIndex = selectedIndex.value,
-            tabs = disasterCategory.map { it.second },
+            tabs = disasterCategory.map { it.second.first },
             onTabSelected = { selectedIndex.value = it },
         )
 
@@ -93,7 +94,11 @@ fun MainScreen() {
                     state = MarkerState(position = position),
                     title = disaster.image,
                     snippet = disaster.text,
-                    onInfoWindowClick = { }
+                    icon = BitmapDescriptorFactory.defaultMarker(
+                        disasterCategory.find { it.first == disaster.category }?.second?.second
+                            ?: BitmapDescriptorFactory.HUE_RED
+                    ),
+                    onInfoWindowClick = { },
                 )
             }
         }

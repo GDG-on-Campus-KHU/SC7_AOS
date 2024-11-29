@@ -11,8 +11,8 @@ data class DisasterModel(
 )
 
 data class PostRequest(
-    val userId: String,
+    val user_id: String,
     val text: String,
-    val image: String,
+    val image_path: String,
     val location: List<Double>
 )

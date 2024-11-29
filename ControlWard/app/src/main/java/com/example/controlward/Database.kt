@@ -34,7 +34,7 @@ object RetrofitClient {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun getFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
+fun getDataFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
     RetrofitClient.apiService.getPosts().enqueue(object : Callback<List<Map<String, Any>>> {
         override fun onResponse(
             call: Call<List<Map<String, Any>>>,
@@ -51,7 +51,7 @@ fun getFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
                         category = item["category"].toString(),
                         accuracy = item["accuracy"].toString()
                     )
-                } as MutableList<DisasterModel>
+                }?.toMutableList() ?: mutableListOf()
                 onSuccess(disasterList)
             } else {
                 Log.d("testt", response.errorBody().toString())
@@ -64,7 +64,7 @@ fun getFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
     })
 }
 
-fun postToDB(postRequest: PostRequest) {
+fun postDataToDB(postRequest: PostRequest) {
     RetrofitClient.apiService.createPost(postRequest).enqueue(object : Callback<PostRequest> {
         override fun onResponse(call: Call<PostRequest>, response: Response<PostRequest>) {
             if (response.isSuccessful) {

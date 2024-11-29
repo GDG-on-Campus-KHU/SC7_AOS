@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Base64
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -45,17 +46,22 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.controlward.PostRequest
 import com.example.controlward.R
 import com.example.controlward.Value
-import com.example.controlward.getFromDB
-import com.example.controlward.postToDB
+import com.example.controlward.getDataFromDB
+import com.example.controlward.getFileFromUri
+import com.example.controlward.postDataToDB
+import com.example.controlward.uploadImageToImgur
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 
 @Composable
 fun AddDisasterScreen(navController: NavController) {
     val context = LocalContext.current
+    val cameraPermission = android.Manifest.permission.CAMERA
     var disasterText by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-    val cameraPermission = android.Manifest.permission.CAMERA
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview(),
@@ -119,9 +125,11 @@ fun AddDisasterScreen(navController: NavController) {
                         contentScale = ContentScale.Fit
                     )
                 } else {
-                    Text(
-                        text = "이미지를 클릭하여 추가하세요",
-                        style = TextStyle(color = Color.Gray)
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_add_photo_alternate_24),
+                        contentDescription = "",
+                        modifier = Modifier.fillMaxSize(0.3f),
+                        tint = Color.LightGray
                     )
                 }
             }
@@ -153,24 +161,45 @@ fun AddDisasterScreen(navController: NavController) {
 
             Button(
                 onClick = {
-                    val postRequest = PostRequest(
-                        Value.uid,
-                        disasterText,
-                        selectedImageUri.toString(),
-                        listOf(Value.location.latitude, Value.location.longitude),
-                    )
-                    postToDB(postRequest)
-                    disasterText = ""
-                    selectedImageUri = null
                     isLoading = false
-                    getFromDB { disasters ->
-                        Value.disasterAllList = disasters.toMutableList()
-                        Value.disasterMap.clear()
-                        disasters.forEach { Value.disasterMap[it.category]?.add(it) }
-                        navController.popBackStack()
+                    val file = selectedImageUri?.let { getFileFromUri(context, it) }
+                    CoroutineScope(Dispatchers.Main).launch {
+                        uploadImageToImgur(file, onSuccess = { imageUrl ->
+                            selectedImageUri = Uri.parse(imageUrl)
+
+                            val postRequest = PostRequest(
+                                Value.uid,
+                                disasterText,
+                                selectedImageUri.toString(),
+                                listOf(Value.location.latitude, Value.location.longitude),
+                            )
+                            postDataToDB(postRequest)
+
+                            disasterText = ""
+                            selectedImageUri = null
+
+                            getDataFromDB { disasters ->
+                                Value.disasterAllList = disasters.toMutableList()
+                                Value.disasterMap.clear()
+                                disasters.forEach { Value.disasterMap[it.category]?.add(it) }
+
+                                navController.popBackStack()
+                            }
+
+                            navController.popBackStack()
+                        }, onFailure = { _ ->
+                            Toast.makeText(
+                                context,
+                                "오류가 발생했습니다. 잠시뒤 다시 시도해 주세요.",
+                                Toast.LENGTH_SHORT
+                            )
+                                .show()
+                            navController.popBackStack()
+                        })
                     }
                 },
                 modifier = Modifier.padding(bottom = 20.dp),
+                enabled = selectedImageUri != null && disasterText != ""
             ) {
                 Icon(
                     painter = painterResource(R.drawable.baseline_add_24),
