@@ -1,7 +1,6 @@
 package com.example.controlward.ui
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,8 +28,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
@@ -65,7 +66,7 @@ fun DisasterListScreen(navController: NavController) {
                     selected = selectedIndex.value == index,
                     onClick = { selectedIndex.value = index },
                     modifier = Modifier.background(Color(240, 230, 255, 255)),
-                    text = { Text(disaster.first) }
+                    text = { Text(text = disaster.first, style = TextStyle(fontSize = 10.sp)) }
                 )
             }
         }
@@ -82,8 +83,10 @@ fun DisasterListScreen(navController: NavController) {
                             .border(1.dp, Color.Black, RoundedCornerShape(16.dp))
                             .padding(10.dp)
                             .clickable {
-                                val encodedImage = URLEncoder.encode(disaster.image, StandardCharsets.UTF_8.toString())
-                                Log.d("testt", encodedImage)
+                                val encodedImage = URLEncoder.encode(
+                                    disaster.image,
+                                    StandardCharsets.UTF_8.toString()
+                                )
                                 navController.navigate("DisasterDetailScreen/${encodedImage}/${disaster.text}")
                             }
                     ) {

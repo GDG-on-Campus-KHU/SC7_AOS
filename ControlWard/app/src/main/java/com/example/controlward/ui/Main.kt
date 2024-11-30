@@ -174,7 +174,7 @@ fun TabColumn(
     }
 }
 
-fun customMarker(context: Context, hue: Float, alpha: Float): BitmapDescriptor {
+fun customMarker(context: Context, hue: Float, alphaValue: Float): BitmapDescriptor {
     val vectorDrawable = ContextCompat.getDrawable(context, R.drawable.baseline_location_on_24)
         ?: return BitmapDescriptorFactory.defaultMarker(hue)
 
@@ -190,24 +190,29 @@ fun customMarker(context: Context, hue: Float, alpha: Float): BitmapDescriptor {
 
     val resizedBitmap = Bitmap.createScaledBitmap(
         originalBitmap,
-        (originalBitmap.width * (1 + 0.5 * alpha)).toInt(),
-        (originalBitmap.height * (1 + 0.5 * alpha)).toInt(),
+        (originalBitmap.width * (1 + 0.5 * alphaValue)).toInt(),
+        (originalBitmap.height * (1 + 0.5 * alphaValue)).toInt(),
         false
     )
 
+    val transparentBitmap = Bitmap.createBitmap(
+        resizedBitmap.width,
+        resizedBitmap.height,
+        Bitmap.Config.ARGB_8888
+    )
     val paint = Paint().apply {
+        isAntiAlias = true
+        alpha = (alphaValue * 255).toInt()
         colorFilter = PorterDuffColorFilter(
-            android.graphics.Color.HSVToColor((alpha * 255).toInt(), floatArrayOf(hue, 1f, 1f)),
+            android.graphics.Color.HSVToColor(255, floatArrayOf(hue, 1f, 1f)),
             PorterDuff.Mode.SRC_IN
         )
     }
+    val transparentCanvas = Canvas(transparentBitmap)
+    transparentCanvas.drawBitmap(resizedBitmap, 0f, 0f, paint)
 
-    val resizedCanvas = Canvas(resizedBitmap)
-    resizedCanvas.drawBitmap(resizedBitmap, 0f, 0f, paint)
-
-    return BitmapDescriptorFactory.fromBitmap(resizedBitmap)
+    return BitmapDescriptorFactory.fromBitmap(transparentBitmap)
 }
-
 
 @Preview(showBackground = true)
 @Composable

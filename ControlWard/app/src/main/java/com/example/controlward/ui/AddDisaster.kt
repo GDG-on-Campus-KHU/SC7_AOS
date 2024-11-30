@@ -2,9 +2,7 @@ package com.example.controlward.ui
 
 import android.app.AlertDialog
 import android.content.Context
-import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Base64
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -38,7 +36,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
@@ -52,7 +49,6 @@ import com.example.controlward.uploadImageToImgur
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
 
 @Composable
 fun AddDisasterScreen(navController: NavController) {
@@ -64,17 +60,8 @@ fun AddDisasterScreen(navController: NavController) {
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview(),
-        onResult = { takenPhoto ->
-            if (takenPhoto != null) {
-                val baos = ByteArrayOutputStream()
-                takenPhoto.compress(
-                    Bitmap.CompressFormat.JPEG,
-                    100,
-                    baos
-                )
-                val b: ByteArray = baos.toByteArray()
-                selectedImageUri = Base64.encodeToString(b, Base64.DEFAULT).toUri()
-            }
+        onResult = { _ ->
+
         }
     )
 
@@ -145,7 +132,6 @@ fun AddDisasterScreen(navController: NavController) {
                 decorationBox = {
                     Box(
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
                     ) {
                         if (disasterText.isEmpty())
                             Text(
