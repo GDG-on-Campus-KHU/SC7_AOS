@@ -34,10 +34,10 @@ object Value {
         "수해" to mutableListOf()
     )
     val disasterCategory = listOf(
-        "인명피해" to BitmapDescriptorFactory.HUE_RED,
+        "인명피해" to BitmapDescriptorFactory.HUE_CYAN,
         "가뭄" to BitmapDescriptorFactory.HUE_BLUE,
         "지진" to BitmapDescriptorFactory.HUE_VIOLET,
-        "화재" to BitmapDescriptorFactory.HUE_CYAN,
+        "화재" to BitmapDescriptorFactory.HUE_RED,
         "수해" to BitmapDescriptorFactory.HUE_MAGENTA,
     )
 }

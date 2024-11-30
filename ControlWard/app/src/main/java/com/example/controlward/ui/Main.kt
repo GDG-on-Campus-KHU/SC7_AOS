@@ -58,7 +58,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 fun MainScreen() {
     val context = LocalContext.current
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(Value.location, 12f)
+        position = CameraPosition.fromLatLngZoom(Value.location, 15f)
     }
     val uiSettings by remember {
         mutableStateOf(MapUiSettings(myLocationButtonEnabled = true))
@@ -117,7 +117,7 @@ fun MainScreen() {
         IconButton(
             onClick = {
                 cameraPositionState.position =
-                    CameraPosition.fromLatLngZoom(Value.location, 12f)
+                    CameraPosition.fromLatLngZoom(Value.location, 15f)
             },
             modifier = Modifier
                 .align(Alignment.BottomStart)
