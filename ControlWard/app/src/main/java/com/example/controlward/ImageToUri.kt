@@ -17,23 +17,21 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 fun getFileFromUri(context: Context, uri: Uri): File? {
     val contentResolver = context.contentResolver
     var file: File? = null
 
     try {
-        // Content URI에서 InputStream을 얻어 File로 저장
         val inputStream: InputStream? = contentResolver.openInputStream(uri)
 
-        // 실제 파일 경로를 생성하려면 임시 파일을 만들어서 해당 파일에 데이터를 씁니다.
         val tempFile = File(context.cacheDir, "temp_image_${System.currentTimeMillis()}.jpg")
         val outputStream: OutputStream = FileOutputStream(tempFile)
 
-        // InputStream과 OutputStream을 복사하여 실제 파일 생성
         inputStream?.copyTo(outputStream)
 
-        // 복사된 파일 반환
         file = tempFile
     } catch (e: Exception) {
         e.printStackTrace()
@@ -43,51 +41,49 @@ fun getFileFromUri(context: Context, uri: Uri): File? {
     return file
 }
 
-fun uploadImageToImgur(
-    imageFile: File?,
-    onSuccess: (String) -> Unit,
-    onFailure: (String) -> Unit
-) {
-    val clientId = BuildConfig.imgurClientId
+suspend fun uploadImageToImgur(
+    imageFile: File?
+): String {
+    return suspendCoroutine { continuation ->
+        val clientId = BuildConfig.imgurClientId
 
-    val client = OkHttpClient()
+        val client = OkHttpClient()
 
-    val mediaType = "image/jpeg".toMediaTypeOrNull()
-    val requestBody = imageFile?.let { RequestBody.create(mediaType, it) }
+        val mediaType = "image/jpeg".toMediaTypeOrNull()
+        val requestBody = imageFile?.let { RequestBody.create(mediaType, it) }
 
-    val multipartBody = requestBody?.let {
-        MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("image", imageFile.name, it)
-            .build()
-    }
+        val multipartBody = requestBody?.let {
+            MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("image", imageFile.name, it)
+                .build()
+        }
 
-    val request = multipartBody?.let {
-        Request.Builder()
-            .url("https://api.imgur.com/3/image")
-            .post(it)
-            .addHeader("Authorization", "Client-ID $clientId")
-            .build()
-    }
+        val request = multipartBody?.let {
+            Request.Builder()
+                .url("https://api.imgur.com/3/image")
+                .post(it)
+                .addHeader("Authorization", "Client-ID $clientId")
+                .build()
+        }
 
-    request?.let {
-        client.newCall(it).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                onFailure("업로드 실패: ${e.message}")
-
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                if (response.isSuccessful) {
-                    val responseBody = response.body?.string()
-                    val jsonResponse = JSONObject(responseBody)
-                    val imageUrl = jsonResponse.getJSONObject("data").getString("link")
-                    onSuccess(imageUrl)
-
-                } else {
-                    onFailure("업로드 실패: ${response.message}")
+        request?.let {
+            client.newCall(it).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    continuation.resumeWith(Result.failure(e))
                 }
-            }
-        })
+
+                override fun onResponse(call: Call, response: Response) {
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        val jsonResponse = JSONObject(responseBody ?: "")
+                        val imageUrl = jsonResponse.getJSONObject("data").getString("link")
+                        continuation.resume(imageUrl)
+                    } else {
+                        continuation.resumeWith(Result.failure(IOException(response.message)))
+                    }
+                }
+            })
+        }
     }
 }

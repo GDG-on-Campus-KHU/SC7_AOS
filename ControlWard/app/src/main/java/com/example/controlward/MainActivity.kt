@@ -24,7 +24,7 @@ import kotlinx.coroutines.tasks.await
 
 object Value {
     lateinit var uid: String
-    var location = LatLng(37.5665, 126.9780)
+    var location = LatLng(37.2393, 127.0834)
     var disasterAllList = mutableListOf<DisasterModel>()
     val disasterMap: MutableMap<String, MutableList<DisasterModel>> = mutableMapOf(
         "인명피해" to mutableListOf(),
