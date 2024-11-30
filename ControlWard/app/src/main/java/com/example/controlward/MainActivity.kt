@@ -11,22 +11,35 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.controlward.ui.LoadingScreen
 import com.example.controlward.ui.theme.ControlWardTheme
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 object Value {
     lateinit var uid: String
     var location = LatLng(37.5665, 126.9780)
     var disasterAllList = mutableListOf<DisasterModel>()
-    var disasterListCrime = mutableListOf<DisasterModel>()
-    var disasterListEarthQuake = mutableListOf<DisasterModel>()
-    var disasterListFlood = mutableListOf<DisasterModel>()
-    var disasterListHeavySnow = mutableListOf<DisasterModel>()
-    var disasterListTsunami = mutableListOf<DisasterModel>()
+    val disasterMap: MutableMap<String, MutableList<DisasterModel>> = mutableMapOf(
+        "인명피해" to mutableListOf(),
+        "가뭄" to mutableListOf(),
+        "지진" to mutableListOf(),
+        "화재" to mutableListOf(),
+        "수해" to mutableListOf()
+    )
+    val disasterCategory = listOf(
+        "인명피해" to BitmapDescriptorFactory.HUE_RED,
+        "가뭄" to BitmapDescriptorFactory.HUE_BLUE,
+        "지진" to BitmapDescriptorFactory.HUE_VIOLET,
+        "화재" to BitmapDescriptorFactory.HUE_CYAN,
+        "수해" to BitmapDescriptorFactory.HUE_MAGENTA,
+    )
 }
 
 class MainActivity : ComponentActivity() {
@@ -42,24 +55,7 @@ class MainActivity : ComponentActivity() {
             if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
                 permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
             ) {
-                auth = FirebaseAuth.getInstance()
-                signInAnonymously()
-
-                setContent {
-                    ControlWardTheme {
-                        LoadingScreen()
-                    }
-                }
-
-                getFromDB { disasters ->
-                    Value.disasterAllList = disasters.toMutableList()
-
-                    setContent {
-                        ControlWardTheme {
-                            ScreenNavigator()
-                        }
-                    }
-                }
+                initializeApp()
             } else {
                 Toast.makeText(this, "앱을 사용하기 위해서 위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
                 finish()
@@ -78,11 +74,7 @@ class MainActivity : ComponentActivity() {
         ) == PackageManager.PERMISSION_GRANTED
 
         if (hasFineLocationPermission && hasCoarseLocationPermission) {
-            setContent {
-                ControlWardTheme {
-                    ScreenNavigator()
-                }
-            }
+            initializeApp()
         } else {
             requestPermissionLauncher.launch(
                 arrayOf(
@@ -103,6 +95,53 @@ class MainActivity : ComponentActivity() {
                 }
         } else {
             Value.uid = auth.currentUser?.uid ?: ""
+        }
+    }
+
+    private suspend fun getCurrentLocation(
+        context: Context,
+        fusedLocationClient: FusedLocationProviderClient,
+    ): Location? {
+        if (ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return null
+        }
+
+        return try {
+            fusedLocationClient.lastLocation.await()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun initializeApp() {
+        setContent {
+            ControlWardTheme {
+                LoadingScreen()
+            }
+        }
+
+        auth = FirebaseAuth.getInstance()
+        signInAnonymously()
+
+        lifecycleScope.launch {
+            val fusedLocationClient =
+                LocationServices.getFusedLocationProviderClient(this@MainActivity)
+            val location = getCurrentLocation(this@MainActivity, fusedLocationClient)
+            location?.let { Value.location = LatLng(it.latitude, it.longitude) }
+
+            getDataFromDB { disasters ->
+                Value.disasterAllList = disasters.toMutableList()
+                disasters.forEach { Value.disasterMap[it.category]?.add(it) }
+
+                setContent {
+                    ControlWardTheme {
+                        ScreenNavigator()
+                    }
+                }
+            }
         }
     }
 }

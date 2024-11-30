@@ -15,7 +15,7 @@ interface ApiService {
     fun getPosts(): Call<List<Map<String, Any>>>
 
     @POST("posts/")
-    fun createPost(@Body post: Any): Call<Unit>
+    fun createPost(@Body post: PostRequest): Call<PostRequest>
 }
 
 object RetrofitClient {
@@ -34,7 +34,7 @@ object RetrofitClient {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun getFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
+fun getDataFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
     RetrofitClient.apiService.getPosts().enqueue(object : Callback<List<Map<String, Any>>> {
         override fun onResponse(
             call: Call<List<Map<String, Any>>>,
@@ -42,7 +42,7 @@ fun getFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
         ) {
             if (response.isSuccessful) {
                 val disasterList = response.body()?.map { item ->
-                    val data = DisasterModel(
+                    DisasterModel(
                         id = item["id"].toString(),
                         userId = item["user_id"].toString(),
                         text = item["text"].toString(),
@@ -51,15 +51,7 @@ fun getFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
                         category = item["category"].toString(),
                         accuracy = item["accuracy"].toString()
                     )
-                    when(data.category){
-                        "Crime" -> Value.disasterListCrime.add(data)
-                        "EarthQuake" -> Value.disasterListEarthQuake.add(data)
-                        "Flood" -> Value.disasterListFlood.add(data)
-                        "HeavySnow" -> Value.disasterListHeavySnow.add(data)
-                        "Tsunami" -> Value.disasterListTsunami.add(data)
-                        else -> {}
-                    }
-                } as MutableList<DisasterModel>
+                }?.toMutableList() ?: mutableListOf()
                 onSuccess(disasterList)
             } else {
                 Log.d("testt", response.errorBody().toString())
@@ -72,9 +64,9 @@ fun getFromDB(onSuccess: (List<DisasterModel>) -> Unit) {
     })
 }
 
-fun postToDB(postRequest: Any) {
-    RetrofitClient.apiService.createPost(postRequest).enqueue(object : Callback<Unit> {
-        override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+fun postDataToDB(postRequest: PostRequest) {
+    RetrofitClient.apiService.createPost(postRequest).enqueue(object : Callback<PostRequest> {
+        override fun onResponse(call: Call<PostRequest>, response: Response<PostRequest>) {
             if (response.isSuccessful) {
                 Log.d("testt", response.code().toString())
             } else {
@@ -82,7 +74,7 @@ fun postToDB(postRequest: Any) {
             }
         }
 
-        override fun onFailure(call: Call<Unit>, t: Throwable) {
+        override fun onFailure(call: Call<PostRequest>, t: Throwable) {
             Log.d("testt", t.message.toString())
         }
     })

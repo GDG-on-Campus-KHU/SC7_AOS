@@ -2,10 +2,7 @@ package com.example.controlward.ui
 
 import android.app.AlertDialog
 import android.content.Context
-import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Base64
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -39,34 +36,32 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.controlward.PostRequest
 import com.example.controlward.R
 import com.example.controlward.Value
-import com.example.controlward.postToDB
-import java.io.ByteArrayOutputStream
+import com.example.controlward.getDataFromDB
+import com.example.controlward.getFileFromUri
+import com.example.controlward.postDataToDB
+import com.example.controlward.uploadImageToImgur
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
-fun AddDisasterScreen() {
-    var disasterText by remember { mutableStateOf("") }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+fun AddDisasterScreen(navController: NavController) {
     val context = LocalContext.current
     val cameraPermission = android.Manifest.permission.CAMERA
+    var disasterText by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview(),
-        onResult = { takenPhoto ->
-            if (takenPhoto != null) {
-                val baos = ByteArrayOutputStream()
-                takenPhoto.compress(
-                    Bitmap.CompressFormat.JPEG,
-                    100,
-                    baos
-                )
-                val b: ByteArray = baos.toByteArray()
-                selectedImageUri = Base64.encodeToString(b, Base64.DEFAULT).toUri()
-            }
+        onResult = { _ ->
+
         }
     )
 
@@ -91,83 +86,113 @@ fun AddDisasterScreen() {
             .padding(40.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(4 / 3f)
-                .border(1.dp, Color.Gray, RoundedCornerShape(16.dp))
-                .padding(10.dp)
-                .clickable {
-                    imageOptions(context) {
-                        when (it) {
-                            "카메라" -> permissionLauncher.launch(cameraPermission)
-                            "갤러리" -> galleryLauncher.launch("image/*")
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(4 / 3f)
+                    .border(1.dp, Color.Gray, RoundedCornerShape(16.dp))
+                    .padding(10.dp)
+                    .clickable {
+                        imageOptions(context) {
+                            when (it) {
+                                "카메라" -> permissionLauncher.launch(cameraPermission)
+                                "갤러리" -> galleryLauncher.launch("image/*")
+                            }
                         }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                if (selectedImageUri != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(selectedImageUri),
+                        contentDescription = "Selected Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_add_photo_alternate_24),
+                        contentDescription = "",
+                        modifier = Modifier.fillMaxSize(0.3f),
+                        tint = Color.LightGray
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.padding(bottom = 20.dp))
+
+            BasicTextField(
+                value = disasterText,
+                onValueChange = { if (it.length <= 100) disasterText = it },
+                modifier = Modifier
+                    .border(1.dp, Color.Gray, RoundedCornerShape(16.dp))
+                    .padding(10.dp)
+                    .fillMaxSize()
+                    .weight(1f),
+                decorationBox = {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        if (disasterText.isEmpty())
+                            Text(
+                                text = "무슨 상황인가요?",
+                                style = TextStyle(Color.Gray)
+                            )
+                    }
+                    it()
+                }
+            )
+            Spacer(modifier = Modifier.padding(bottom = 20.dp))
+
+            Button(
+                onClick = {
+                    isLoading = false
+                    val file = selectedImageUri?.let { getFileFromUri(context, it) }
+                    CoroutineScope(Dispatchers.Main).launch {
+                        uploadImageToImgur(file, onSuccess = { imageUrl ->
+                            selectedImageUri = Uri.parse(imageUrl)
+
+                            val postRequest = PostRequest(
+                                Value.uid,
+                                disasterText,
+                                selectedImageUri.toString(),
+                                listOf(Value.location.latitude, Value.location.longitude),
+                            )
+                            postDataToDB(postRequest)
+
+                            disasterText = ""
+                            selectedImageUri = null
+
+                            getDataFromDB { disasters ->
+                                Value.disasterAllList = disasters.toMutableList()
+                                Value.disasterMap.clear()
+                                disasters.forEach { Value.disasterMap[it.category]?.add(it) }
+
+                                navController.popBackStack()
+                            }
+
+                            navController.popBackStack()
+                        }, onFailure = { _ ->
+                            Toast.makeText(
+                                context,
+                                "오류가 발생했습니다. 잠시뒤 다시 시도해 주세요.",
+                                Toast.LENGTH_SHORT
+                            )
+                                .show()
+                            navController.popBackStack()
+                        })
                     }
                 },
-            contentAlignment = Alignment.Center
-        ) {
-            if (selectedImageUri != null) {
-                Image(
-                    painter = rememberAsyncImagePainter(selectedImageUri),
-                    contentDescription = "Selected Image",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(10.dp),
-                    contentScale = ContentScale.Fit
-                )
-                Log.d("testt", selectedImageUri.toString())
-            } else {
-                Text(
-                    text = "이미지를 클릭하여 추가하세요",
-                    style = TextStyle(color = Color.Gray)
+                modifier = Modifier.padding(bottom = 20.dp),
+                enabled = selectedImageUri != null && disasterText != ""
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_add_24),
+                    contentDescription = ""
                 )
             }
-        }
-        Spacer(modifier = Modifier.padding(bottom = 20.dp))
-
-        BasicTextField(
-            value = disasterText,
-            onValueChange = { if (it.length <= 100) disasterText = it },
-            modifier = Modifier
-                .border(1.dp, Color.Gray, RoundedCornerShape(16.dp))
-                .padding(10.dp)
-                .fillMaxSize()
-                .weight(1f),
-            decorationBox = {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (disasterText.isEmpty())
-                        Text(
-                            text = "무슨 상황인가요?",
-                            style = TextStyle(Color.Gray)
-                        )
-                }
-                it()
-            }
-        )
-        Spacer(modifier = Modifier.padding(bottom = 20.dp))
-
-        Button(
-            onClick = {
-                val postRequest = PostRequest(
-                    Value.uid,
-                    disasterText,
-                    selectedImageUri.toString(),
-                    listOf(Value.location.latitude, Value.location.longitude),
-                )
-                postToDB(postRequest)
-                disasterText = ""
-                selectedImageUri = null
-            },
-            modifier = Modifier.padding(bottom = 40.dp),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_add_24),
-                contentDescription = ""
-            )
+        } else {
+            LoadingScreen()
         }
     }
 }
@@ -193,5 +218,5 @@ fun imageOptions(context: Context, option: (String) -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun PreviewAddDisaster() {
-    AddDisasterScreen()
+    AddDisasterScreen(rememberNavController())
 }

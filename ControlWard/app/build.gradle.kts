@@ -12,6 +12,8 @@ val properties = Properties().apply {
 }
 val GOOGLE_MAP_API = (properties.getProperty("GOOGLE_MAP_API")).replace("\"", "")
 val localhost = (properties.getProperty("localhost"))
+val imgurClientId = (properties.getProperty("imgurClientId"))
+
 
 android {
     namespace = "com.example.controlward"
@@ -32,6 +34,7 @@ android {
         addManifestPlaceholders(mapOf("GOOGLE_MAP_API" to GOOGLE_MAP_API))
 
         buildConfigField("String", "localhost", localhost)
+        buildConfigField("String", "imgurClientId", imgurClientId)
     }
 
     buildTypes {
@@ -93,4 +96,5 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
     implementation(libs.kotlin.stdlib)
+    implementation(libs.firebase.storage.ktx)
 }
