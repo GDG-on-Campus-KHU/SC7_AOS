@@ -40,7 +40,7 @@ fun TabScreen(navController: NavController) {
         }
     ) {
         when (pagerState.value) {
-            0 -> MainScreen()
+            0 -> MainScreen(navController)
             1 -> DisasterListScreen(navController)
             2 -> UserInfoScreen()
         }
