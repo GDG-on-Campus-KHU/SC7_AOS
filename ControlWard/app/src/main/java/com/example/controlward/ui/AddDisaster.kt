@@ -149,7 +149,8 @@ fun AddDisasterScreen(navController: NavController) {
                     isLoading = false
                     val file = selectedImageUri?.let { getFileFromUri(context, it) }
                     CoroutineScope(Dispatchers.Main).launch {
-                        uploadImageToImgur(file, onSuccess = { imageUrl ->
+                        try {
+                            val imageUrl = file?.let { uploadImageToImgur(it) }
                             selectedImageUri = Uri.parse(imageUrl)
 
                             val postRequest = PostRequest(
@@ -167,24 +168,19 @@ fun AddDisasterScreen(navController: NavController) {
                                 Value.disasterAllList = disasters.toMutableList()
                                 Value.disasterMap.clear()
                                 disasters.forEach { Value.disasterMap[it.category]?.add(it) }
-
-                                navController.popBackStack()
                             }
 
                             navController.popBackStack()
-                        }, onFailure = { _ ->
+                        } catch (e: Exception) {
                             Toast.makeText(
                                 context,
                                 "오류가 발생했습니다. 잠시뒤 다시 시도해 주세요.",
                                 Toast.LENGTH_SHORT
-                            )
-                                .show()
+                            ).show()
                             navController.popBackStack()
-                        })
+                        }
                     }
-                },
-                modifier = Modifier.padding(bottom = 20.dp),
-                enabled = selectedImageUri != null && disasterText != ""
+                }
             ) {
                 Icon(
                     painter = painterResource(R.drawable.baseline_add_24),
