@@ -38,6 +38,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.controlward.R
 import com.example.controlward.Value
 import com.example.controlward.Value.disasterCategory
@@ -52,10 +54,12 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @SuppressLint("AutoboxingStateValueProperty")
 @Composable
-fun MainScreen() {
+fun MainScreen(navController: NavController) {
     val context = LocalContext.current
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(Value.location, 15f)
@@ -109,7 +113,13 @@ fun MainScreen() {
                     title = disaster.image,
                     snippet = disaster.text,
                     icon = customMarker(context, hue, alpha),
-                    onInfoWindowClick = { },
+                    onInfoWindowClick = {
+                        val encodedImage = URLEncoder.encode(
+                            disaster.image,
+                            StandardCharsets.UTF_8.toString()
+                        )
+                        navController.navigate("DisasterDetailScreen/${encodedImage}/${disaster.text}")
+                    },
                 )
             }
         }
@@ -217,5 +227,5 @@ fun customMarker(context: Context, hue: Float, alphaValue: Float): BitmapDescrip
 @Preview(showBackground = true)
 @Composable
 fun PreviewMainLayout() {
-    MainScreen()
+    MainScreen(rememberNavController())
 }
